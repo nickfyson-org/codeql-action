@@ -4,7 +4,7 @@ See the [releases page](https://github.com/github/codeql-action/releases) for th
 
 ## [UNRELEASED]
 
-No user facing changes.
+- [v3+ only] The CodeQL Action now runs on Node.js v20. [#1000](https://github.com/github/codeql-action/pull/2006)
 
 ## 2.22.7 - 16 Nov 2023
 
