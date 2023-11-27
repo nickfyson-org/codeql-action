@@ -86,7 +86,7 @@ jobs:
         python .github/update-release-branch.py \
           --github-token ${{ secrets.GITHUB_TOKEN }} \
           --repository-nwo ${{ github.repository }} \
-          --mode ${MAJOR_VERSION}-release \
+          --mode '${MAJOR_VERSION}-release' \
           --conductor ${GITHUB_ACTOR}
 
     # - name: Update v1 release branch
