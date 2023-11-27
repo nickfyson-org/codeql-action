@@ -65,9 +65,8 @@ jobs:
         LATEST_TAG=$(git tag --sort=-v:refname | head -1)
         echo "LATEST_TAG ${LATEST_TAG}"
         RELEASE_BRANCH=releases/${MAJOR_VERSION}
-        git rev-parse --verify ${RELEASE_BRANCH} > /dev/null 2>&1
-        if [ $? -eq 0 ]; then
-        then
+        exists=$(git rev-parse --verify ${RELEASE_BRANCH} 2>/dev/null)
+        if [ $exists ]; then
           echo "Release branch ${RELEASE_BRANCH} already exists"
         else
           git checkout -b ${RELEASE_BRANCH} ${LATEST_TAG}
