@@ -65,7 +65,7 @@ jobs:
         LATEST_TAG=$(git tag --sort=-v:refname | head -1)
         echo "LATEST_TAG ${LATEST_TAG}"
         git checkout -b releases/${MAJOR_VERSION} ${LATEST_TAG}
-        git push
+        git push --set-upstream origin releases/${MAJOR_VERSION}
         git rev-parse --abbrev-ref HEAD
         git checkout ${REF_NAME}
         git rev-parse --abbrev-ref HEAD
