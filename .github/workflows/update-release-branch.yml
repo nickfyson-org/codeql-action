@@ -79,7 +79,6 @@ jobs:
         echo "Returning to branch: ${CURRENT_BRANCH}"
         git checkout $CURRENT_BRANCH > /dev/null 2>&1
 
-
     # - name: Update v2 release branch
     #   if: github.event_name == 'workflow_dispatch'
     #   run: |
