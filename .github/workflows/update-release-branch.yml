@@ -4,6 +4,11 @@ on:
   # This will open a PR to update the v2 release branch.
   workflow_dispatch:
 
+  # When the v2 release is complete, this workflow will open a PR to update the v1 release branch.
+  push:
+    branches:
+      - releases/*
+
 jobs:
   update:
     timeout-minutes: 45
@@ -38,9 +43,38 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
 
-    - name: Update release branch
+    - name: Get version tags
+      id: getVersion
       run: |
-        python .github/update-release-branch.py \
-          --github-token ${{ secrets.GITHUB_TOKEN }} \
-          --repository-nwo ${{ github.repository }} \
-          --conductor ${GITHUB_ACTOR}
+        VERSION="v$(jq '.version' -r 'package.json')"
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        # Update the `vx` tag
+        MAJOR_VERSION=$(cut -d '.' -f1 <<< "${VERSION}")
+        echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
+
+
+    - name: Dump branches
+      env:
+        VERSION: "${{ steps.getVersion.outputs.version }}"
+        MAJOR_VERSION: "${{ steps.getVersion.outputs.major_version }}"
+      run: |
+        echo "VERSION ${VERSION}"
+        echo "MAJOR_VERSION ${MAJOR_VERSION}"
+
+    # - name: Update v2 release branch
+    #   if: github.event_name == 'workflow_dispatch'
+    #   run: |
+    #     python .github/update-release-branch.py \
+    #       --github-token ${{ secrets.GITHUB_TOKEN }} \
+    #       --repository-nwo ${{ github.repository }} \
+    #       --mode v2-release \
+    #       --conductor ${GITHUB_ACTOR}
+
+    # - name: Update v1 release branch
+    #   if: github.event_name == 'push'
+    #   run: |
+    #     python .github/update-release-branch.py \
+    #       --github-token ${{ secrets.GITHUB_TOKEN }} \
+    #       --repository-nwo ${{ github.repository }} \
+    #       --mode v1-release \
+    #       --conductor ${GITHUB_ACTOR}
