@@ -59,13 +59,14 @@ jobs:
       if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
       env:
         REF_NAME: "${{ github.ref_name }}"
+        REPOSITORY: "${{ github.repository }}"
         MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
       run: |
         echo "MAJOR_VERSION ${MAJOR_VERSION}"
         LATEST_TAG=$(git tag --sort=-v:refname | head -1)
         echo "LATEST_TAG ${LATEST_TAG}"
         RELEASE_BRANCH=releases/${MAJOR_VERSION}
-        if git rev-parse --verify $RELEASE_BRANCH > /dev/null 2>&1
+        if gh api repos/$REPOSITORY/branches/$RELEASE_BRANCH > /dev/null 2>&1
         then
           echo "Release branch ${RELEASE_BRANCH} already exists"
         else
