@@ -56,7 +56,7 @@ jobs:
     # only when the workflow has been manually triggered on main do
     # we know that we definitely want the release branch to exist
     - name: Ensure release branch exists
-      if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
+      if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/main'
       env:
         VERSION: "${{ steps.versions.outputs.version }}"
         MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
