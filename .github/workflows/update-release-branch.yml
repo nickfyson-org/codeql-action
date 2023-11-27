@@ -44,7 +44,7 @@ jobs:
         git config --global user.name "github-actions[bot]"
 
     - name: Get version tags
-      id: getVersion
+      id: versions
       run: |
         VERSION="v$(jq '.version' -r 'package.json')"
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
@@ -53,10 +53,13 @@ jobs:
         echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
 
 
-    - name: Dump branches
+    # only when the workflow has been manually triggered on main do
+    # we know that we definitely want the release branch to exist
+    - name: Ensure release branch exists
+      if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
       env:
-        VERSION: "${{ steps.getVersion.outputs.version }}"
-        MAJOR_VERSION: "${{ steps.getVersion.outputs.major_version }}"
+        VERSION: "${{ steps.versions.outputs.version }}"
+        MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
       run: |
         echo "VERSION ${VERSION}"
         echo "MAJOR_VERSION ${MAJOR_VERSION}"
