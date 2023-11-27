@@ -52,8 +52,7 @@ jobs:
         MAJOR_VERSION=$(cut -d '.' -f1 <<< "${VERSION}")
         echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
 
-
-    # only when the workflow has been manually triggered on main do
+    # when the workflow has been manually triggered on main,
     # we know that we definitely want the release branch to exist
     - name: Ensure release branch exists
       if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
@@ -79,14 +78,16 @@ jobs:
         echo "Returning to branch: ${CURRENT_BRANCH}"
         git checkout $CURRENT_BRANCH > /dev/null 2>&1
 
-    # - name: Update v2 release branch
-    #   if: github.event_name == 'workflow_dispatch'
-    #   run: |
-    #     python .github/update-release-branch.py \
-    #       --github-token ${{ secrets.GITHUB_TOKEN }} \
-    #       --repository-nwo ${{ github.repository }} \
-    #       --mode v2-release \
-    #       --conductor ${GITHUB_ACTOR}
+    - name: Update current release branch
+      if: github.event_name == 'workflow_dispatch'
+      env:
+        MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
+      run: |
+        python .github/update-release-branch.py \
+          --github-token ${{ secrets.GITHUB_TOKEN }} \
+          --repository-nwo ${{ github.repository }} \
+          --mode ${MAJOR_VERSION}-release \
+          --conductor ${GITHUB_ACTOR}
 
     # - name: Update v1 release branch
     #   if: github.event_name == 'push'
