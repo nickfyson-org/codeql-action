@@ -75,8 +75,8 @@ jobs:
             git branch --show-current
             echo ""
         fi
-        echo "Returning to branch: ${CURRENT_BRANCH}"
-        git checkout $CURRENT_BRANCH > /dev/null 2>&1
+        echo "Returning to branch: ${REF_NAME}"
+        git checkout ${REF_NAME}
 
     - name: Update current release branch
       if: github.event_name == 'workflow_dispatch'
@@ -84,8 +84,9 @@ jobs:
         MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
       run: |
         python .github/update-release-branch.py \
-          --github-tokenFOOBAR ${{ secrets.GITHUB_TOKEN }} \
+          --github-token ${{ secrets.GITHUB_TOKEN }} \
           --repository-nwo ${{ github.repository }} \
+          --mode '${MAJOR_VERSION}-release \
           --conductor ${GITHUB_ACTOR}
 
     # - name: Update v1 release branch
