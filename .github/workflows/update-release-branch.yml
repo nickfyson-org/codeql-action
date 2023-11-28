@@ -97,7 +97,7 @@ jobs:
     timeout-minutes: 45
     runs-on: ubuntu-latest
     needs: [update]
-    if: github.repository == 'nickfyson-org/codeql-action'
+    if: ${{ needs.update.outputs.target_branches != '[]' && needs.update.outputs.target_branches != '' }}
     strategy:
       matrix:
         target_branch: ${{ fromJson(needs.update.outputs.target_branches) }}
