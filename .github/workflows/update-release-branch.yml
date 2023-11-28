@@ -84,9 +84,8 @@ jobs:
         MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
       run: |
         python .github/update-release-branch.py \
-          --github-token ${{ secrets.GITHUB_TOKEN }} \
+          --github-tokenFOOBAR ${{ secrets.GITHUB_TOKEN }} \
           --repository-nwo ${{ github.repository }} \
-          --mode v2-release \
           --conductor ${GITHUB_ACTOR}
 
     # - name: Update v1 release branch
