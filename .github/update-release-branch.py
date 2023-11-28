@@ -196,7 +196,7 @@ def main():
   parser = argparse.ArgumentParser('update-release-branch.py')
 
   parser.add_argument(
-    '--github-token',
+    '--github-tokenFOOBAR',
     type=str,
     required=True,
     help='GitHub token, typically from GitHub Actions.'
