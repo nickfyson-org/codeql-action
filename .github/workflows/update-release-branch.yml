@@ -99,7 +99,7 @@ jobs:
     if: github.repository == 'nickfyson-org/codeql-action'
     strategy:
       matrix:
-        target_branch: ${{ fromJson(needs.update.outputs.target_branches) }}
+        target_branch: ${{ needs.update.outputs.target_branches }}
     steps:
     - name: Dump environment
       run: env
