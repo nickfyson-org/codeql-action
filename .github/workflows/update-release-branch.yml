@@ -92,7 +92,7 @@ jobs:
     #       --conductor ${GITHUB_ACTOR}
 
     - name: Determine older release branches
-      if: github.event_name == 'push'
+      # if: github.event_name == 'push'
       run: |
           python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("target_branches="+json.dumps(["releases/v1", "releases/v2"])+"\n")'
 
