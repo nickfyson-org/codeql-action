@@ -97,9 +97,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [update]
     if: github.repository == 'nickfyson-org/codeql-action'
-    strategy:
-      matrix:
-        target_branch: ${{ needs.update.outputs.target_branches }}
+    # strategy:
+    #   matrix:
+    #     target_branch: ${{ needs.update.outputs.target_branches }}
     steps:
     - name: Dump environment
       run: env
@@ -132,7 +132,8 @@ jobs:
     - name: Update v1 release branch
       # if: github.event_name == 'push'
       run: |
-        echo '${{ matrix.target_branch }}'
+        # echo '${{ matrix.target_branch }}'
+        echo '${{ needs.update.outputs.target_branches }}'
         # python .github/update-release-branch.py \
         #   --github-token ${{ secrets.GITHUB_TOKEN }} \
         #   --repository-nwo ${{ github.repository }} \
