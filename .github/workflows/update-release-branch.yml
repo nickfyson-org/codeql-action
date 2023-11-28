@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 45
     runs-on: ubuntu-latest
     if: github.repository == 'nickfyson-org/codeql-action'
+    outputs:
+      timed_out: ${{ steps.versions.outputs.terminate }}
     steps:
     - name: Dump environment
       run: env
@@ -51,6 +53,7 @@ jobs:
         # Update the `vx` tag
         MAJOR_VERSION=$(cut -d '.' -f1 <<< "${VERSION}")
         echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
+        echo "target_branches=['foo', 'bar', 'blort']" >> "$GITHUB_OUTPUT"
 
     # when the workflow has been manually triggered on main,
     # we know that we definitely want the release branch to exist
@@ -92,10 +95,11 @@ jobs:
   backport:
     timeout-minutes: 45
     runs-on: ubuntu-latest
+    needs: [update]
     if: github.repository == 'nickfyson-org/codeql-action'
     strategy:
       matrix:
-        target_branch: ['releases/v1','releases/v2','releases/v3']
+        target_branch: ${{ needs.update.outputs.target_branches }}
     steps:
     - name: Dump environment
       run: env
