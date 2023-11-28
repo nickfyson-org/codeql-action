@@ -53,7 +53,7 @@ jobs:
         # Update the `vx` tag
         MAJOR_VERSION=$(cut -d '.' -f1 <<< "${VERSION}")
         echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
-        python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("output="+json.dumps(["releases/v1", "releases/v2"])+"\n")'
+        python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("target_branches="+json.dumps(["releases/v1", "releases/v2"])+"\n")'
 
     # when the workflow has been manually triggered on main,
     # we know that we definitely want the release branch to exist
