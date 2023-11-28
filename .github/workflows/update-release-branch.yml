@@ -53,7 +53,6 @@ jobs:
         # Update the `vx` tag
         MAJOR_VERSION=$(cut -d '.' -f1 <<< "${VERSION}")
         echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
-        python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("target_branches="+json.dumps(["releases/v1", "releases/v2"])+"\n")'
 
     # when the workflow has been manually triggered on main,
     # we know that we definitely want the release branch to exist
@@ -92,6 +91,11 @@ jobs:
     #       --mode ${MAJOR_VERSION}-release \
     #       --conductor ${GITHUB_ACTOR}
 
+    - name: Determine older release branches
+      if: github.event_name == 'push'
+      run: |
+          python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("target_branches="+json.dumps(["releases/v1", "releases/v2"])+"\n")'
+
   backport:
     timeout-minutes: 45
     runs-on: ubuntu-latest
@@ -129,8 +133,7 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --global user.name "github-actions[bot]"
 
-    - name: Update v1 release branch
-      # if: github.event_name == 'push'
+    - name: Update older release branch
       run: |
         echo '${{ matrix.target_branch }}'
         # python .github/update-release-branch.py \
