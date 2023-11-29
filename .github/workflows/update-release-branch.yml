@@ -87,6 +87,7 @@ jobs:
           --repository-nwo ${{ github.repository }} \
           --source-branch '${{ env.REF_NAME }}' \
           --target-branch 'releases/${{ env.MAJOR_VERSION }}' \
+          --is-primary-release \
           --conductor ${GITHUB_ACTOR}
 
   backport:
