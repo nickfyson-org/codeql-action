@@ -82,7 +82,7 @@ jobs:
       if: github.event_name == 'workflow_dispatch'
       run: |
         echo 'SOURCE_BRANCH=main'
-        echo 'TARGET_BRANCH=releases/${MAJOR_VERSION}'
+        echo 'TARGET_BRANCH=releases/$MAJOR_VERSION'
         # python .github/update-release-branch.py \
         #   --github-token ${{ secrets.GITHUB_TOKEN }} \
         #   --repository-nwo ${{ github.repository }} \
@@ -107,8 +107,8 @@ jobs:
 
     - name: Update older release branch
       run: |
-        echo 'SOURCE_BRANCH=${SOURCE_BRANCH}'
-        echo 'TARGET_BRANCH=${TARGET_BRANCH}'
+        echo 'SOURCE_BRANCH=$SOURCE_BRANCH'
+        echo 'TARGET_BRANCH=$TARGET_BRANCH'
         # python .github/update-release-branch.py \
         #   --github-token ${{ secrets.GITHUB_TOKEN }} \
         #   --repository-nwo ${{ github.repository }} \
