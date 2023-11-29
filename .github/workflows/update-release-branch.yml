@@ -21,7 +21,7 @@ jobs:
       major_version: ${{ steps.versions.outputs.major_version }}
       latest_tag: ${{ steps.versions.outputs.latest_tag }}
       release_branch: ${{ steps.branches.outputs.release_branch }}
-      backport_source_branch:
+      backport_source_branch: 'main'
       backport_target_branches: ${{ steps.branches.outputs.backport_target_branches }}
     steps:
     - uses: actions/checkout@v4
@@ -40,6 +40,10 @@ jobs:
     - id: branches
       name: Determine older release branches
       uses: ./.github/actions/release-branches
+
+    - run: |
+        echo "release_branch=${{ steps.branches.outputs.release_branch }}"
+        echo "backport_target_branches=${{ steps.branches.outputs.backport_target_branches }}"
 
   update:
     timeout-minutes: 45
