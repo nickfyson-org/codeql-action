@@ -243,7 +243,6 @@ def main():
   target_branch = args.target_branch
 
   repo = Github(args.github_token).get_repo(args.repository_nwo)
-  version =
 
   # the target branch will be of the form releases/vN, where N is the major version number
   target_branch_major_version = target_branch.strip('releases/v')
