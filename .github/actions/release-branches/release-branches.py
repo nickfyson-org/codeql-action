@@ -1,8 +1,17 @@
+import argparse
 import os, json
 
-with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+def main():
 
-    f.write(f"release_branch=releases/{os.environ['MAJOR_VERSION']}\n")
+  parser = argparse.ArgumentParser()
+  parser.add_argument("--major-version", required=True, type=str, help="The major version of the release")
+  args = parser.parse_args()
+
+  major_version = args.major_version
+
+  with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+
+    f.write(f"release_branch=releases/{major_version}\n")
 
     # TODO determine the set of older release branches 👆
     # ensure backport_target_branches is empty for anything other than the latest release branch
