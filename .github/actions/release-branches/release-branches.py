@@ -38,7 +38,9 @@ def main():
     f.write(f"backport_source_branch=releases/{major_version}\n")
 
     backport_target_branches = []
-    for i in range(int(major_version)-1, 0, -1):
+    major_version_number = int(major_version.strip("v"))
+
+    for i in range(major_version_number-1, 0, -1):
       print(i)
       branch_name = f"releases/v{i}"
       if branch_exists_on_remote(branch_name):
