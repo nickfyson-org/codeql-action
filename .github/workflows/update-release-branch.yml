@@ -21,11 +21,11 @@ jobs:
       major_version: ${{ steps.versions.outputs.major_version }}
       latest_tag: ${{ steps.versions.outputs.latest_tag }}
       release_branch: ${{ steps.branches.outputs.release_branch }}
-      backport_source_branch: 'main'
+      backport_source_branch: ${{ steps.branches.outputs.backport_source_branch }}
       backport_target_branches: ${{ steps.branches.outputs.backport_target_branches }}
     steps:
     - uses: actions/checkout@v4
-    - uses: ./.github/actions/release-prepare
+    - uses: ./.github/actions/release-initialise
 
     - name: Get version tags
       id: versions
@@ -42,11 +42,7 @@ jobs:
       uses: ./.github/actions/release-branches
       with:
         major_version: ${{ steps.versions.outputs.major_version }}
-
-    - name: debug-logging
-      run: |
-        echo "release_branch=${{ steps.branches.outputs.release_branch }}"
-        echo "backport_target_branches=${{ steps.branches.outputs.backport_target_branches }}"
+        latest_tag: ${{ steps.versions.outputs.latest_tag }}
 
   update:
     timeout-minutes: 45
@@ -60,7 +56,7 @@ jobs:
       LATEST_TAG: "${{ needs.prepare.outputs.latest_tag }}"
     steps:
     - uses: actions/checkout@v4
-    - uses: ./.github/actions/release-prepare
+    - uses: ./.github/actions/release-initialise
 
     # when the workflow has been manually triggered on main,
     # we know that we definitely want the release branch to exist
@@ -106,7 +102,7 @@ jobs:
       TARGET_BRANCH: ${{ matrix.target_branch }}
     steps:
     - uses: actions/checkout@v4
-    - uses: ./.github/actions/release-prepare
+    - uses: ./.github/actions/release-initialise
 
     - name: Update older release branch
       run: |
