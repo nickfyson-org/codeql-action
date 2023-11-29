@@ -103,7 +103,7 @@ jobs:
     timeout-minutes: 45
     runs-on: ubuntu-latest
     needs: [prepare]
-    if: ${{ needs.prepare.outputs.backport_target_branches != '[]' && needs.prepare.outputs.backport_target_branches != '' }}
+    if: github.event_name == 'push' && ${{ needs.prepare.outputs.backport_target_branches != '[]' && needs.prepare.outputs.backport_target_branches != '' }}
     strategy:
       matrix:
         target_branch: ${{ fromJson(needs.prepare.outputs.backport_target_branches) }}
