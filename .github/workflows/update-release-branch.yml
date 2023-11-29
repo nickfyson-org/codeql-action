@@ -80,12 +80,12 @@ jobs:
     - name: Update current release branch
       if: github.event_name == 'workflow_dispatch'
       run: |
-        echo SOURCE_BRANCH=main
+        echo SOURCE_BRANCH=${REF_NAME}
         echo TARGET_BRANCH=releases/${MAJOR_VERSION}
         python .github/update-release-branch.py \
           --github-token ${{ secrets.GITHUB_TOKEN }} \
           --repository-nwo ${{ github.repository }} \
-          --source-branch ${SOURCE_BRANCH} \
+          --source-branch ${REF_NAME} \
           --target-branch ${TARGET_BRANCH} \
           --conductor ${GITHUB_ACTOR}
 
