@@ -41,7 +41,7 @@ jobs:
       name: Determine older release branches
       uses: ./.github/actions/release-branches
       with:
-        major_version: ${MAJOR_VERSION}
+        major_version: ${{ steps.versions.outputs.major_version }}
 
     - name: debug-logging
       run: |
