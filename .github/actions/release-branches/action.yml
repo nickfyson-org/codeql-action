@@ -18,6 +18,4 @@ runs:
       run: |
         python ${{ github.action_path }}/release-branches.py \
             --major-version ${{ inputs.major_version }}
-        echo "release_branch=foobar" >> $GITHUB_OUTPUT
-        echo "backport_target_branches=['foobarblort']" >> $GITHUB_OUTPUT
       shell: bash
