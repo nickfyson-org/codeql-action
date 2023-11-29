@@ -40,8 +40,11 @@ jobs:
     - id: branches
       name: Determine older release branches
       uses: ./.github/actions/release-branches
+      with:
+        major_version: ${MAJOR_VERSION}
 
-    - run: |
+    - name: debug-logging
+      run: |
         echo "release_branch=${{ steps.branches.outputs.release_branch }}"
         echo "backport_target_branches=${{ steps.branches.outputs.backport_target_branches }}"
 

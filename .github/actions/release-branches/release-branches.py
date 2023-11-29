@@ -9,6 +9,8 @@ def main():
 
   major_version = args.major_version
 
+  print(f"major-version::{major_version}")
+
   with open(os.environ["GITHUB_OUTPUT"], "a") as f:
 
     f.write(f"release_branch=releases/{major_version}\n")
