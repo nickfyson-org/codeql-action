@@ -47,7 +47,7 @@ jobs:
   update:
     timeout-minutes: 45
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
+    if: github.event_name == 'workflow_dispatch'
     needs: [prepare]
     env:
       REF_NAME: "${{ github.ref_name }}"
