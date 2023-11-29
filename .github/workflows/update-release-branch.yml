@@ -81,12 +81,12 @@ jobs:
       if: github.event_name == 'workflow_dispatch'
       run: |
         echo SOURCE_BRANCH=${REF_NAME}
-        echo TARGET_BRANCH=releases/${MAJOR_VERSION}
+        echo TARGET_BRANCH=releases/v${MAJOR_VERSION}
         python .github/update-release-branch.py \
           --github-token ${{ secrets.GITHUB_TOKEN }} \
           --repository-nwo ${{ github.repository }} \
-          --source-branch ${REF_NAME} \
-          --target-branch ${TARGET_BRANCH} \
+          --source-branch '${{ env.REF_NAME }}' \
+          --target-branch 'releases/v${{ env.MAJOR_VERSION }}' \
           --conductor ${GITHUB_ACTOR}
 
   backport:
