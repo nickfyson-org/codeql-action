@@ -11,5 +11,5 @@ runs:
   using: "composite"
   steps:
     - id: branches
-      run: pipenv run python ${{ github.action_path }}/release-branches.py
+      run: python ${{ github.action_path }}/release-branches.py
       shell: bash
