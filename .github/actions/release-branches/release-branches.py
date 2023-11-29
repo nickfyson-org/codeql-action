@@ -45,7 +45,7 @@ def main():
       branch_name = f"releases/v{i}"
       if branch_exists_on_remote(branch_name):
         backport_target_branches.append(branch_name)
-    f.write("backport_target_branches="+json.dumps(["releases/v2","releases/v1"])+"\n")
+    f.write("backport_target_branches="+json.dumps(backport_target_branches)+"\n")
 
 if __name__ == "__main__":
   main()
