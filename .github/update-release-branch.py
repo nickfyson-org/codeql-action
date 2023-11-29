@@ -223,9 +223,7 @@ def main():
   parser.add_argument(
     '--is-primary-release',
     type=bool,
-    required=False,
-    default=False,
-    store_true=True,
+    action='store_true',
     help='Whether this update is the primary release for the current major version.'
   )
   # parser.add_argument(
