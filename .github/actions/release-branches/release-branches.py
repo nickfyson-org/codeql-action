@@ -18,7 +18,7 @@ def main():
     # TODO determine the set of older release branches 👆
     # ensure backport_target_branches is empty for anything other than the latest release branch
     # abort if the
-    f.write("backport_target_branches="+json.dumps(["releases/v2"])+"\n")
+    f.write("backport_target_branches="+json.dumps(["releases/v2","releases/v1"])+"\n")
 
 if __name__ == "__main__":
   main()
