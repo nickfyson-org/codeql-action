@@ -13,14 +13,14 @@ No user facing changes.
 
 """
 
-# Value of the mode flag for a v1 release
-V1_MODE = 'v1-release'
+# # Value of the mode flag for a v1 release
+# V1_MODE = 'v1-release'
 
-# Value of the mode flag for a v2 release
-V2_MODE = 'v2-release'
+# # Value of the mode flag for a v2 release
+# V2_MODE = 'v2-release'
 
-SOURCE_BRANCH_FOR_MODE = { V1_MODE: 'releases/v2', V2_MODE: 'main' }
-TARGET_BRANCH_FOR_MODE = { V1_MODE: 'releases/v1', V2_MODE: 'releases/v2' }
+# SOURCE_BRANCH_FOR_MODE = { V1_MODE: 'releases/v2', V2_MODE: 'main' }
+# TARGET_BRANCH_FOR_MODE = { V1_MODE: 'releases/v1', V2_MODE: 'releases/v2' }
 
 # Name of the remote
 ORIGIN = 'origin'
@@ -42,7 +42,7 @@ def branch_exists_on_remote(branch_name):
 # Opens a PR from the given branch to the target branch
 def open_pr(
   repo, all_commits, source_branch_short_sha, new_branch_name, source_branch, target_branch,
-  conductor, is_v2_release, labels, conflicted_files):
+  conductor, is_primary_release, conflicted_files):
   # Sort the commits into the pull requests that introduced them,
   # and any commits that don't have a pull request
   pull_requests = []
@@ -99,18 +99,19 @@ def open_pr(
   body.append(' - [ ] Check that there are not any unexpected commits being merged into the ' + target_branch + ' branch.')
   body.append(' - [ ] Ensure the docs team is aware of any documentation changes that need to be released.')
 
-  if not is_v2_release:
+  if not is_primary_release:
     body.append(' - [ ] Remove and re-add the "Update dependencies" label to the PR to trigger just this workflow.')
     body.append(' - [ ] Wait for the "Update dependencies" workflow to push a commit updating the dependencies.')
     body.append(' - [ ] Mark the PR as ready for review to trigger the full set of PR checks.')
 
   body.append(' - [ ] Approve and merge this PR. Make sure `Create a merge commit` is selected rather than `Squash and merge` or `Rebase and merge`.')
 
-  if is_v2_release:
+  if is_primary_release:
     body.append(' - [ ] Merge the mergeback PR that will automatically be created once this PR is merged.')
     body.append(' - [ ] Merge the v1 release PR that will automatically be created once this PR is merged.')
 
   title = 'Merge ' + source_branch + ' into ' + target_branch
+  labels = ['Update dependencies'] if not is_primary_release else []
 
   # Create the pull request
   # PR checks won't be triggered on PRs created by Actions. Therefore mark the PR as draft so that
@@ -208,15 +209,27 @@ def main():
     help='The nwo of the repository, for example github/codeql-action.'
   )
   parser.add_argument(
-    '--mode',
+    '--source-branch',
     type=str,
     required=True,
-    choices=[V2_MODE, V1_MODE],
-    help=f"Which release to perform. '{V2_MODE}' uses {SOURCE_BRANCH_FOR_MODE[V2_MODE]} as the source " +
-      f"branch and {TARGET_BRANCH_FOR_MODE[V2_MODE]} as the target branch. " +
-      f"'{V1_MODE}' uses {SOURCE_BRANCH_FOR_MODE[V1_MODE]} as the source branch and " +
-      f"{TARGET_BRANCH_FOR_MODE[V1_MODE]} as the target branch."
+    help='Source branch for release branch update.'
   )
+  parser.add_argument(
+    '--target-branch',
+    type=str,
+    required=True,
+    help='Target branch for release branch update.'
+  )
+  # parser.add_argument(
+  #   '--mode',
+  #   type=str,
+  #   required=True,
+  #   choices=[V2_MODE, V1_MODE],
+  #   help=f"Which release to perform. '{V2_MODE}' uses {SOURCE_BRANCH_FOR_MODE[V2_MODE]} as the source " +
+  #     f"branch and {TARGET_BRANCH_FOR_MODE[V2_MODE]} as the target branch. " +
+  #     f"'{V1_MODE}' uses {SOURCE_BRANCH_FOR_MODE[V1_MODE]} as the source branch and " +
+  #     f"{TARGET_BRANCH_FOR_MODE[V1_MODE]} as the target branch."
+  # )
   parser.add_argument(
     '--conductor',
     type=str,
@@ -226,16 +239,19 @@ def main():
 
   args = parser.parse_args()
 
-  source_branch = SOURCE_BRANCH_FOR_MODE[args.mode]
-  target_branch = TARGET_BRANCH_FOR_MODE[args.mode]
+  source_branch = args.source_branch
+  target_branch = args.target_branch
 
   repo = Github(args.github_token).get_repo(args.repository_nwo)
-  version = get_current_version()
+  version =
 
-  if args.mode == V1_MODE:
-    # Change the version number to a v1 equivalent
-    version = get_current_version()
-    version = f'1{version[1:]}'
+  # the target branch will be of the form releases/vN, where N is the major version number
+  target_branch_major_version = target_branch.strip('releases/v')
+
+  # split version into major, minor, patch
+  _, v_minor, v_patch = get_current_version().split('.')
+
+  version = f"{target_branch_major_version}.{v_minor}.{v_patch}"
 
   # Print what we intend to go
   print('Considering difference between ' + source_branch + ' and ' + target_branch)
@@ -268,7 +284,8 @@ def main():
   # reconstruct the release manually)
   conflicted_files = []
 
-  if args.mode == V1_MODE:
+  # if the source is anything other than 'main' then we are performing a backport
+  if source_branch != 'main':
     # If we're performing a backport, start from the target branch
     print(f'Creating {new_branch_name} from the {ORIGIN}/{target_branch} branch')
     run_git('checkout', '-b', new_branch_name, f'{ORIGIN}/{target_branch}')
@@ -342,8 +359,7 @@ def main():
     source_branch=source_branch,
     target_branch=target_branch,
     conductor=args.conductor,
-    is_v2_release=args.mode == V2_MODE,
-    labels=['Update dependencies'] if args.mode == V1_MODE else [],
+    is_primary_release=source_branch == 'main',
     conflicted_files=conflicted_files
   )
 

@@ -31,7 +31,6 @@ def main():
 
   print("major_version: " + major_version)
   print("latest_tag: " + latest_tag)
-  print("REF: " + os.environ["GITHUB_REF"])
 
   with open(os.environ["GITHUB_OUTPUT"], "a") as f:
 
@@ -41,7 +40,6 @@ def main():
     major_version_number = int(major_version.strip("v"))
 
     for i in range(major_version_number-1, 0, -1):
-      print(i)
       branch_name = f"releases/v{i}"
       if branch_exists_on_remote(branch_name):
         backport_target_branches.append(branch_name)
