@@ -10,68 +10,66 @@ on:
       - releases/*
 
 jobs:
-  update:
-    timeout-minutes: 45
+
+  prepare:
     runs-on: ubuntu-latest
     if: github.repository == 'nickfyson-org/codeql-action'
     outputs:
-      target_branches: ${{ steps.versions.outputs.target_branches }}
+      version: ${{ steps.versions.outputs.version }}
+      major_version: ${{ steps.versions.outputs.major_version }}
+      latest_tag: ${{ steps.versions.outputs.latest_tag }}
+      release_branch: ${{ steps.branches.outputs.release_branch }}
+      backport_source_branch:
+      backport_target_branches: ${{ steps.branches.outputs.backport_target_branches }}
     steps:
-    - name: Dump environment
-      run: env
-
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: '${{ toJson(github) }}'
-      run: echo "$GITHUB_CONTEXT"
-
     - uses: actions/checkout@v4
-      with:
-        # Need full history so we calculate diffs
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install PyGithub==1.55 requests
-
-    - name: Update git config
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
+    - uses: ./.github/actions/release-prepare
 
     - name: Get version tags
       id: versions
       run: |
         VERSION="v$(jq '.version' -r 'package.json')"
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
-        # Update the `vx` tag
         MAJOR_VERSION=$(cut -d '.' -f1 <<< "${VERSION}")
         echo "major_version=${MAJOR_VERSION}" >> $GITHUB_OUTPUT
+        LATEST_TAG=$(git tag --sort=-v:refname | head -1)
+        echo "latest_tag=${LATEST_TAG}" >> $GITHUB_OUTPUT
+
+    - id: branches
+      name: Determine older release branches
+      run: |
+          python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("release_branch=releases/${MAJOR_VERSION}\n")'
+          python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("backport_target_branches="+json.dumps(["releases/v2"])+"\n")'
+      # TODO determine the set of older release branches 👆
+      # ensure backport_target_branches is empty for anything other than the latest release branch
+      # abort if the
+
+
+  update:
+    timeout-minutes: 45
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
+    needs: [prepare]
+    env:
+      REF_NAME: "${{ github.ref_name }}"
+      REPOSITORY: "${{ github.repository }}"
+      MAJOR_VERSION: "${{ needs.prepare.outputs.major_version }}"
+      LATEST_TAG: "${{ needs.prepare.outputs.latest_tag }}"
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ./.github/actions/release-prepare
 
     # when the workflow has been manually triggered on main,
     # we know that we definitely want the release branch to exist
     - name: Ensure release branch exists
-      if: github.event_name == 'workflow_dispatch' && github.ref_name == 'nickfyson/new-release-workflows'
-      env:
-        REF_NAME: "${{ github.ref_name }}"
-        REPOSITORY: "${{ github.repository }}"
-        MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
       run: |
         echo "MAJOR_VERSION ${MAJOR_VERSION}"
-        LATEST_TAG=$(git tag --sort=-v:refname | head -1)
-        echo "LATEST_TAG ${LATEST_TAG}"
         RELEASE_BRANCH=releases/${MAJOR_VERSION}
         if git checkout $RELEASE_BRANCH > /dev/null 2>&1; then
-            echo "Branch already exists"
+            echo "Branch $RELEASE_BRANCH already exists"
             echo ""
         else
-            echo "Creating release branch"
+            echo "Creating $RELEASE_BRANCH branch"
             git checkout -b ${RELEASE_BRANCH} ${LATEST_TAG}
             git push --set-upstream origin ${RELEASE_BRANCH}
             git branch --show-current
@@ -80,62 +78,37 @@ jobs:
         echo "Returning to branch: ${REF_NAME}"
         git checkout ${REF_NAME}
 
-    # - name: Update current release branch
-    #   if: github.event_name == 'workflow_dispatch'
-    #   env:
-    #     MAJOR_VERSION: "${{ steps.versions.outputs.major_version }}"
-    #   run: |
-    #     python .github/update-release-branch.py \
-    #       --github-token ${{ secrets.GITHUB_TOKEN }} \
-    #       --repository-nwo ${{ github.repository }} \
-    #       --mode ${MAJOR_VERSION}-release \
-    #       --conductor ${GITHUB_ACTOR}
-
-    - name: Determine older release branches
-      # if: github.event_name == 'push'
+    - name: Update current release branch
+      if: github.event_name == 'workflow_dispatch'
       run: |
-          python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("target_branches="+json.dumps(["releases/v1", "releases/v2"])+"\n")'
+        echo 'SOURCE_BRANCH=main'
+        echo 'TARGET_BRANCH=releases/${MAJOR_VERSION}'
+        # python .github/update-release-branch.py \
+        #   --github-token ${{ secrets.GITHUB_TOKEN }} \
+        #   --repository-nwo ${{ github.repository }} \
+        #   --mode ${MAJOR_VERSION}-release \
+        #   --conductor ${GITHUB_ACTOR}
 
   backport:
     timeout-minutes: 45
     runs-on: ubuntu-latest
-    needs: [update]
-    if: ${{ needs.update.outputs.target_branches != '[]' && needs.update.outputs.target_branches != '' }}
+    needs: [prepare]
+    if: ${{ needs.prepare.outputs.backport_target_branches != '[]' && needs.prepare.outputs.backport_target_branches != '' }}
+    # if: ${{ github.event_name == 'push' && needs.prepare.outputs.backport_target_branches != '[]' && needs.update.outputs.backport_target_branches != '' }}
     strategy:
       matrix:
-        target_branch: ${{ fromJson(needs.update.outputs.target_branches) }}
+        target_branch: ${{ fromJson(needs.prepare.outputs.backport_target_branches) }}
+    env:
+      SOURCE_BRANCH: ${{ needs.prepare.outputs.backport_source_branch }}
+      TARGET_BRANCH: ${{ matrix.target_branch }}
     steps:
-    - name: Dump environment
-      run: env
-
-    - name: Dump GitHub context
-      env:
-        GITHUB_CONTEXT: '${{ toJson(github) }}'
-      run: echo "$GITHUB_CONTEXT"
-
     - uses: actions/checkout@v4
-      with:
-        # Need full history so we calculate diffs
-        fetch-depth: 0
-
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.8
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install PyGithub==1.55 requests
-
-    - name: Update git config
-      run: |
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config --global user.name "github-actions[bot]"
+    - uses: ./.github/actions/release-prepare
 
     - name: Update older release branch
       run: |
-        echo '${{ matrix.target_branch }}'
+        echo 'SOURCE_BRANCH=${SOURCE_BRANCH}'
+        echo 'TARGET_BRANCH=${TARGET_BRANCH}'
         # python .github/update-release-branch.py \
         #   --github-token ${{ secrets.GITHUB_TOKEN }} \
         #   --repository-nwo ${{ github.repository }} \
