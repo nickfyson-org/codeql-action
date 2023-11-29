@@ -220,6 +220,14 @@ def main():
     required=True,
     help='Target branch for release branch update.'
   )
+  parser.add_argument(
+    '--is-primary-release',
+    type=bool,
+    required=False,
+    default=False,
+    store_true=True,
+    help='Whether this update is the primary release for the current major version.'
+  )
   # parser.add_argument(
   #   '--mode',
   #   type=str,
@@ -241,6 +249,7 @@ def main():
 
   source_branch = args.source_branch
   target_branch = args.target_branch
+  is_primary_release = args.is_primary_release
 
   repo = Github(args.github_token).get_repo(args.repository_nwo)
 
@@ -284,7 +293,7 @@ def main():
   conflicted_files = []
 
   # if the source is anything other than 'main' then we are performing a backport
-  if source_branch != 'main':
+  if not is_primary_release:
     # If we're performing a backport, start from the target branch
     print(f'Creating {new_branch_name} from the {ORIGIN}/{target_branch} branch')
     run_git('checkout', '-b', new_branch_name, f'{ORIGIN}/{target_branch}')
@@ -358,7 +367,7 @@ def main():
     source_branch=source_branch,
     target_branch=target_branch,
     conductor=args.conductor,
-    is_primary_release=source_branch == 'main',
+    is_primary_release=is_primary_release,
     conflicted_files=conflicted_files
   )
 
