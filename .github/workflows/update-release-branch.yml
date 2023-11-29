@@ -1,10 +1,12 @@
 name: Update release branch
 on:
   # You can trigger this workflow via workflow dispatch to start a release.
-  # This will open a PR to update the v2 release branch.
+  # This will open a PR to update the lates release branch.
   workflow_dispatch:
 
-  # When the v2 release is complete, this workflow will open a PR to update the v1 release branch.
+  # When a release is complete this workflow will open up backport PRs to older release branches.
+  # NB while it will trigger on any release branch update, the backport job will not proceed for
+  # anything other than than releases/v{latest}
   push:
     branches:
       - releases/*
@@ -37,13 +39,7 @@ jobs:
 
     - id: branches
       name: Determine older release branches
-      run: |
-          python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("release_branch=releases/${MAJOR_VERSION}\n")'
-          python -c 'import os, json; open(os.environ["GITHUB_OUTPUT"], "a").write("backport_target_branches="+json.dumps(["releases/v2"])+"\n")'
-      # TODO determine the set of older release branches 👆
-      # ensure backport_target_branches is empty for anything other than the latest release branch
-      # abort if the
-
+      uses: ./.github/actions/release-branches
 
   update:
     timeout-minutes: 45

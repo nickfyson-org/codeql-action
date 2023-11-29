@@ -1,0 +1,15 @@
+name: 'Release branches'
+description: 'Determine branches for release & backport'
+outputs:
+  release_branch:
+    description: "The release branch for"
+    value: ${{ steps.branches.outputs.release_branch }}
+  backport_target_branches:
+    description: "JSON encoded list of branches to target with backports"
+    value: ${{ steps.branches.outputs.backport_target_branches }}
+runs:
+  using: "composite"
+  steps:
+    - id: branches
+      run: pipenv run python ${{ github.action_path }}/release-branches.py
+      shell: bash
