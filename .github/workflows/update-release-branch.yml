@@ -44,6 +44,15 @@ jobs:
         major_version: ${{ steps.versions.outputs.major_version }}
         latest_tag: ${{ steps.versions.outputs.latest_tag }}
 
+    - name: debug logging
+      run: |
+        echo 'version: ${{ steps.versions.outputs.version }}'
+        echo 'major_version: ${{ steps.versions.outputs.major_version }}'
+        echo 'latest_tag: ${{ steps.versions.outputs.latest_tag }}'
+        echo 'release_branch: ${{ steps.branches.outputs.release_branch }}'
+        echo 'backport_source_branch: ${{ steps.branches.outputs.backport_source_branch }}'
+        echo 'backport_target_branches: ${{ steps.branches.outputs.backport_target_branches }}'
+
   update:
     timeout-minutes: 45
     runs-on: ubuntu-latest
