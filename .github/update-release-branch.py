@@ -301,14 +301,14 @@ def main():
     # package.json files when we merge in the v2 branch.
     # This commit will not exist the first time we release the v1 branch from the v2 branch, so we
     # use `git log --grep` to conditionally revert the commit.
-    print('Reverting the 1.x.x version number and changelog updates from the last release to avoid conflicts')
-    v1_update_commits = run_git('log', '--grep', '^Update version and changelog for v', '--format=%H').split()
+    print('Reverting the version number and changelog updates from the last release to avoid conflicts')
+    vOlder_update_commits = run_git('log', '--grep', '^Update version and changelog for v', '--format=%H').split()
 
-    if len(v1_update_commits) > 0:
-      print(f'  Reverting {v1_update_commits[0]}')
+    if len(vOlder_update_commits) > 0:
+      print(f'  Reverting {vOlder_update_commits[0]}')
       # Only revert the newest commit as older ones will already have been reverted in previous
       # releases.
-      run_git('revert', v1_update_commits[0], '--no-edit')
+      run_git('revert', vOlder_update_commits[0], '--no-edit')
 
       # Also revert the "Update checked-in dependencies" commit created by Actions.
       update_dependencies_commit = run_git('log', '--grep', '^Update checked-in dependencies', '--format=%H').split()[0]
