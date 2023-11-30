@@ -109,8 +109,7 @@ jobs:
           git push origin --atomic --force refs/tags/"${VERSION}" refs/tags/"${major_version_tag}"
 
       - name: Create mergeback branch
-        # TODO only crete mergeback PR when for the latest release branch
-        if: ${{ steps.check.outputs.exists != 'true' && steps.getVersion.outputs.latest_release_branch == github.ref_name }}
+        if: ${{ steps.check.outputs.exists != 'true' && endsWith(github.ref_name, steps.getVersion.outputs.latest_release_branch) }}
         env:
           VERSION: "${{ steps.getVersion.outputs.version }}"
           NEW_BRANCH: "${{ steps.getVersion.outputs.newBranch }}"
