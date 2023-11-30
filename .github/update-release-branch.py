@@ -13,8 +13,14 @@ No user facing changes.
 
 """
 
-SOURCE_BRANCH = 'main'
-TARGET_BRANCH = 'releases/v2'
+# # Value of the mode flag for a v1 release
+# V1_MODE = 'v1-release'
+
+# # Value of the mode flag for a v2 release
+# V2_MODE = 'v2-release'
+
+# SOURCE_BRANCH_FOR_MODE = { V1_MODE: 'releases/v2', V2_MODE: 'main' }
+# TARGET_BRANCH_FOR_MODE = { V1_MODE: 'releases/v1', V2_MODE: 'releases/v2' }
 
 # Name of the remote
 ORIGIN = 'origin'
@@ -34,21 +40,23 @@ def branch_exists_on_remote(branch_name):
   return run_git('ls-remote', '--heads', ORIGIN, branch_name).strip() != ''
 
 # Opens a PR from the given branch to the target branch
-def open_pr(repo, all_commits, source_branch_short_sha, new_branch_name, conductor):
+def open_pr(
+  repo, all_commits, source_branch_short_sha, new_branch_name, source_branch, target_branch,
+  conductor, is_primary_release, conflicted_files):
   # Sort the commits into the pull requests that introduced them,
   # and any commits that don't have a pull request
   pull_requests = []
   commits_without_pull_requests = []
   for commit in all_commits:
-    pr = get_pr_for_commit(commit)
+    pr = get_pr_for_commit(repo, commit)
 
     if pr is None:
       commits_without_pull_requests.append(commit)
     elif not any(p for p in pull_requests if p.number == pr.number):
       pull_requests.append(pr)
 
-  print(f'Found {len(pull_requests)} pull requests.')
-  print(f'Found {len(commits_without_pull_requests)} commits not in a pull request.')
+  print('Found ' + str(len(pull_requests)) + ' pull requests')
+  print('Found ' + str(len(commits_without_pull_requests)) + ' commits not in a pull request')
 
   # Sort PRs and commits by age
   pull_requests = sorted(pull_requests, key=lambda pr: pr.number)
@@ -56,7 +64,7 @@ def open_pr(repo, all_commits, source_branch_short_sha, new_branch_name, conduct
 
   # Start constructing the body text
   body = []
-  body.append(f'Merging {source_branch_short_sha} into {TARGET_BRANCH}.')
+  body.append('Merging ' + source_branch_short_sha + ' into ' + target_branch)
 
   body.append('')
   body.append(f'Conductor for this PR is @{conductor}.')
@@ -79,33 +87,51 @@ def open_pr(repo, all_commits, source_branch_short_sha, new_branch_name, conduct
 
   body.append('')
   body.append('Please do the following:')
+  if len(conflicted_files) > 0:
+    body.append(' - [ ] Ensure `package.json` file contains the correct version.')
+    body.append(' - [ ] Add commits to this branch to resolve the merge conflicts ' +
+      'in the following files:')
+    body.extend([f'    - [ ] `{file}`' for file in conflicted_files])
+    body.append(' - [ ] Ensure another maintainer has reviewed the additional commits you added to this ' +
+      'branch to resolve the merge conflicts.')
   body.append(' - [ ] Ensure the CHANGELOG displays the correct version and date.')
   body.append(' - [ ] Ensure the CHANGELOG includes all relevant, user-facing changes since the last release.')
-  body.append(f' - [ ] Check that there are not any unexpected commits being merged into the {TARGET_BRANCH} branch.')
+  body.append(' - [ ] Check that there are not any unexpected commits being merged into the ' + target_branch + ' branch.')
   body.append(' - [ ] Ensure the docs team is aware of any documentation changes that need to be released.')
-  body.append(' - [ ] Approve and merge this PR. Make sure `Create a merge commit` is selected rather than `Squash and merge` or `Rebase and merge`.')
-  body.append(' - [ ] Merge the mergeback PR that will automatically be created once this PR is merged.')
 
-  title = f'Merge {SOURCE_BRANCH} into {TARGET_BRANCH}'
+  if not is_primary_release:
+    body.append(' - [ ] Remove and re-add the "Update dependencies" label to the PR to trigger just this workflow.')
+    body.append(' - [ ] Wait for the "Update dependencies" workflow to push a commit updating the dependencies.')
+    body.append(' - [ ] Mark the PR as ready for review to trigger the full set of PR checks.')
+
+  body.append(' - [ ] Approve and merge this PR. Make sure `Create a merge commit` is selected rather than `Squash and merge` or `Rebase and merge`.')
+
+  if is_primary_release:
+    body.append(' - [ ] Merge the mergeback PR that will automatically be created once this PR is merged.')
+    body.append(' - [ ] Merge the v1 release PR that will automatically be created once this PR is merged.')
+
+  title = 'Merge ' + source_branch + ' into ' + target_branch
+  labels = ['Update dependencies'] if not is_primary_release else []
 
   # Create the pull request
   # PR checks won't be triggered on PRs created by Actions. Therefore mark the PR as draft so that
   # a maintainer can take the PR out of draft, thereby triggering the PR checks.
-  pr = repo.create_pull(title=title, body='\n'.join(body), head=new_branch_name, base=TARGET_BRANCH, draft=True)
-  print(f'Created PR #{pr.number}')
+  pr = repo.create_pull(title=title, body='\n'.join(body), head=new_branch_name, base=target_branch, draft=True)
+  pr.add_to_labels(*labels)
+  print('Created PR #' + str(pr.number))
 
   # Assign the conductor
   pr.add_to_assignees(conductor)
-  print(f'Assigned PR to {conductor}')
+  print('Assigned PR to ' + conductor)
 
 # Gets a list of the SHAs of all commits that have happened on the source branch
 # since the last release to the target branch.
 # This will not include any commits that exist on the target branch
 # that aren't on the source branch.
-def get_commit_difference(repo):
+def get_commit_difference(repo, source_branch, target_branch):
   # Passing split nothing means that the empty string splits to nothing: compare `''.split() == []`
   # to `''.split('\n') == ['']`.
-  commits = run_git('log', '--pretty=format:%H', f'{ORIGIN}/{TARGET_BRANCH}..{ORIGIN}/{SOURCE_BRANCH}').strip().split()
+  commits = run_git('log', '--pretty=format:%H', ORIGIN + '/' + target_branch + '..' + ORIGIN + '/' + source_branch).strip().split()
 
   # Convert to full-fledged commit objects
   commits = [repo.get_commit(c) for c in commits]
@@ -121,13 +147,13 @@ def is_pr_merge_commit(commit):
 def get_truncated_commit_message(commit):
   message = commit.commit.message.split('\n')[0]
   if len(message) > 60:
-    return f'{message[:57]}...'
+    return message[:57] + '...'
   else:
     return message
 
 # Converts a commit into the PR that introduced it to the source branch.
 # Returns the PR object, or None if no PR could be found.
-def get_pr_for_commit(commit):
+def get_pr_for_commit(repo, commit):
   prs = commit.get_pulls()
 
   if prs.totalCount > 0:
@@ -161,7 +187,7 @@ def update_changelog(version):
   else:
     content = EMPTY_CHANGELOG
 
-  newContent = content.replace('[UNRELEASED]', f'{version} - {get_today_string()}', 1)
+  newContent = content.replace('[UNRELEASED]', version + ' - ' + get_today_string(), 1)
 
   with open('CHANGELOG.md', 'w') as f:
     f.write(newContent)
@@ -183,6 +209,34 @@ def main():
     help='The nwo of the repository, for example github/codeql-action.'
   )
   parser.add_argument(
+    '--source-branch',
+    type=str,
+    required=True,
+    help='Source branch for release branch update.'
+  )
+  parser.add_argument(
+    '--target-branch',
+    type=str,
+    required=True,
+    help='Target branch for release branch update.'
+  )
+  parser.add_argument(
+    '--is-primary-release',
+    action='store_true',
+    default=False,
+    help='Whether this update is the primary release for the current major version.'
+  )
+  # parser.add_argument(
+  #   '--mode',
+  #   type=str,
+  #   required=True,
+  #   choices=[V2_MODE, V1_MODE],
+  #   help=f"Which release to perform. '{V2_MODE}' uses {SOURCE_BRANCH_FOR_MODE[V2_MODE]} as the source " +
+  #     f"branch and {TARGET_BRANCH_FOR_MODE[V2_MODE]} as the target branch. " +
+  #     f"'{V1_MODE}' uses {SOURCE_BRANCH_FOR_MODE[V1_MODE]} as the source branch and " +
+  #     f"{TARGET_BRANCH_FOR_MODE[V1_MODE]} as the target branch."
+  # )
+  parser.add_argument(
     '--conductor',
     type=str,
     required=True,
@@ -191,46 +245,120 @@ def main():
 
   args = parser.parse_args()
 
+  source_branch = args.source_branch
+  target_branch = args.target_branch
+  is_primary_release = args.is_primary_release
+
   repo = Github(args.github_token).get_repo(args.repository_nwo)
-  version = get_current_version()
+
+  # the target branch will be of the form releases/vN, where N is the major version number
+  target_branch_major_version = target_branch.strip('releases/v')
+
+  # split version into major, minor, patch
+  _, v_minor, v_patch = get_current_version().split('.')
+
+  version = f"{target_branch_major_version}.{v_minor}.{v_patch}"
 
   # Print what we intend to go
-  print(f'Considering difference between {SOURCE_BRANCH} and {TARGET_BRANCH}...')
-  source_branch_short_sha = run_git('rev-parse', '--short', f'{ORIGIN}/{SOURCE_BRANCH}').strip()
-  print(f'Current head of {SOURCE_BRANCH} is {source_branch_short_sha}.')
+  print('Considering difference between ' + source_branch + ' and ' + target_branch)
+  source_branch_short_sha = run_git('rev-parse', '--short', ORIGIN + '/' + source_branch).strip()
+  print('Current head of ' + source_branch + ' is ' + source_branch_short_sha)
 
   # See if there are any commits to merge in
-  commits = get_commit_difference(repo=repo)
+  commits = get_commit_difference(repo=repo, source_branch=source_branch, target_branch=target_branch)
   if len(commits) == 0:
-    print(f'No commits to merge from {SOURCE_BRANCH} to {TARGET_BRANCH}.')
+    print('No commits to merge from ' + source_branch + ' to ' + target_branch)
     return
 
   # The branch name is based off of the name of branch being merged into
   # and the SHA of the branch being merged from. Thus if the branch already
   # exists we can assume we don't need to recreate it.
-  new_branch_name = f'update-v{version}-{source_branch_short_sha}'
-  print(f'Branch name is {new_branch_name}.')
+  new_branch_name = 'update-v' + version + '-' + source_branch_short_sha
+  print('Branch name is ' + new_branch_name)
 
   # Check if the branch already exists. If so we can abort as this script
   # has already run on this combination of branches.
   if branch_exists_on_remote(new_branch_name):
-    print(f'Branch {new_branch_name} already exists. Nothing to do.')
+    print('Branch ' + new_branch_name + ' already exists. Nothing to do.')
     return
 
   # Create the new branch and push it to the remote
-  print(f'Creating branch {new_branch_name}.')
+  print('Creating branch ' + new_branch_name)
 
-  # If we're performing a standard release, there won't be any new commits on the target branch,
-  # as these will have already been merged back into the source branch. Therefore we can just
-  # start from the source branch.
-  run_git('checkout', '-b', new_branch_name, f'{ORIGIN}/{SOURCE_BRANCH}')
+  # The process of creating the v1 release can run into merge conflicts. We commit the unresolved
+  # conflicts so a maintainer can easily resolve them (vs erroring and requiring maintainers to
+  # reconstruct the release manually)
+  conflicted_files = []
 
-  print('Updating changelog')
-  update_changelog(version)
+  # if the source is anything other than 'main' then we are performing a backport
+  if not is_primary_release:
 
-  # Create a commit that updates the CHANGELOG
-  run_git('add', 'CHANGELOG.md')
-  run_git('commit', '-m', f'Update changelog for v{version}')
+    # the source branch will be of the form releases/vN, where N is the major version number
+    source_branch_major_version = source_branch.strip('releases/v')
+
+    # If we're performing a backport, start from the target branch
+    print(f'Creating {new_branch_name} from the {ORIGIN}/{target_branch} branch')
+    run_git('checkout', '-b', new_branch_name, f'{ORIGIN}/{target_branch}')
+
+    # Revert the commit that we made as part of the last release that updated the version number and
+    # changelog to refer to 1.x.x variants. This avoids merge conflicts in the changelog and
+    # package.json files when we merge in the v2 branch.
+    # This commit will not exist the first time we release the v1 branch from the v2 branch, so we
+    # use `git log --grep` to conditionally revert the commit.
+    print('Reverting the version number and changelog updates from the last release to avoid conflicts')
+    vOlder_update_commits = run_git('log', '--grep', '^Update version and changelog for v', '--format=%H').split()
+
+    if len(vOlder_update_commits) > 0:
+      print(f'  Reverting {vOlder_update_commits[0]}')
+      # Only revert the newest commit as older ones will already have been reverted in previous
+      # releases.
+      run_git('revert', vOlder_update_commits[0], '--no-edit')
+
+      # Also revert the "Update checked-in dependencies" commit created by Actions.
+      update_dependencies_commit = run_git('log', '--grep', '^Update checked-in dependencies', '--format=%H').split()[0]
+      print(f'  Reverting {update_dependencies_commit}')
+      run_git('revert', update_dependencies_commit, '--no-edit')
+
+    else:
+      print('  Nothing to revert.')
+
+    print(f'Merging {ORIGIN}/{source_branch} into the release prep branch')
+    # Commit any conflicts (see the comment for `conflicted_files`)
+    run_git('merge', f'{ORIGIN}/{source_branch}', allow_non_zero_exit_code=True)
+    conflicted_files = run_git('diff', '--name-only', '--diff-filter', 'U').splitlines()
+    if len(conflicted_files) > 0:
+      run_git('add', '.')
+      run_git('commit', '--no-edit')
+
+    # Migrate the package version number from a vLatest version number to a vOlder version number
+    print(f'Setting version number to {version}')
+    subprocess.check_output(['npm', 'version', version, '--no-git-tag-version'])
+    run_git('add', 'package.json', 'package-lock.json')
+
+    # Migrate the changelog notes from v2 version numbers to v1 version numbers
+    print(f'Migrating changelog notes from v{source_branch_major_version} to v{target_branch_major_version}')
+    subprocess.check_output(['sed', '-i', f's/^## {source_branch_major_version}\./## {target_branch_major_version}./g', 'CHANGELOG.md'])
+
+    # Remove changelog notes from all versions that do not apply to the vOlder branch
+    for v in range(int(target_branch_major_version)+1, int(source_branch_major_version)+1):
+      print(f'Removing changelog notes that do not apply to v{target_branch_major_version}')
+      subprocess.check_output(['sed', '-i', f'/^- \[v{v}+ only\]/d', 'CHANGELOG.md'])
+
+    # Amend the commit generated by `npm version` to update the CHANGELOG
+    run_git('add', 'CHANGELOG.md')
+    run_git('commit', '-m', f'Update version and changelog for v{version}')
+  else:
+    # If we're performing a standard release, there won't be any new commits on the target branch,
+    # as these will have already been merged back into the source branch. Therefore we can just
+    # start from the source branch.
+    run_git('checkout', '-b', new_branch_name, f'{ORIGIN}/{source_branch}')
+
+    print('Updating changelog')
+    update_changelog(version)
+
+    # Create a commit that updates the CHANGELOG
+    run_git('add', 'CHANGELOG.md')
+    run_git('commit', '-m', f'Update changelog for v{version}')
 
   run_git('push', ORIGIN, new_branch_name)
 
@@ -240,7 +368,11 @@ def main():
     commits,
     source_branch_short_sha,
     new_branch_name,
+    source_branch=source_branch,
+    target_branch=target_branch,
     conductor=args.conductor,
+    is_primary_release=is_primary_release,
+    conflicted_files=conflicted_files
   )
 
 if __name__ == '__main__':
