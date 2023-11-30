@@ -51,6 +51,8 @@ jobs:
           short_sha="${GITHUB_SHA:0:8}"
           NEW_BRANCH="mergeback/${VERSION}-to-${BASE_BRANCH}-${short_sha}"
           echo "newBranch=${NEW_BRANCH}" >> $GITHUB_OUTPUT
+          # Unshallow the repo in order to allow pushes
+          git fetch --unshallow --tags
           LATEST_RELEASE_BRANCH=$(git branch -r | grep -E "origin/releases/v[0-9]+$" | sed 's/origin\///g' | sort -V | tail -1 | xargs)
           echo "latest_release_branch=${LATEST_RELEASE_BRANCH}" >> $GITHUB_OUTPUT
 
@@ -93,8 +95,6 @@ jobs:
         env:
           VERSION: ${{ steps.getVersion.outputs.version }}
         run: |
-          # Unshallow the repo in order to allow pushes
-          git fetch --unshallow
           # Create the `vx.y.z` tag
           git tag --annotate "${VERSION}" --message "${VERSION}"
           # Update the `vx` tag
