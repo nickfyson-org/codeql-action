@@ -5,6 +5,8 @@ import subprocess
 # Name of the remote
 ORIGIN = 'origin'
 
+OLDEST_SUPPORTED_MAJOR_VERSION = 2
+
 # Runs git with the given args and returns the stdout.
 # Raises an error if git does not exit successfully (unless passed
 # allow_non_zero_exit_code=True).
@@ -14,10 +16,6 @@ def run_git(*args, allow_non_zero_exit_code=False):
   if not allow_non_zero_exit_code and p.returncode != 0:
     raise Exception(f'Call to {" ".join(cmd)} exited with code {p.returncode} stderr: {p.stderr.decode("ascii")}.')
   return p.stdout.decode('ascii')
-
-# Returns true if the given branch exists on the origin remote
-def branch_exists_on_remote(branch_name):
-  return run_git('ls-remote', '--heads', ORIGIN, branch_name).strip() != ''
 
 def main():
 
@@ -41,7 +39,7 @@ def main():
 
     for i in range(major_version_number-1, 0, -1):
       branch_name = f"releases/v{i}"
-      if branch_exists_on_remote(branch_name):
+      if i >= OLDEST_SUPPORTED_MAJOR_VERSION:
         backport_target_branches.append(branch_name)
     f.write("backport_target_branches="+json.dumps(backport_target_branches)+"\n")
 
