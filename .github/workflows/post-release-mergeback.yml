@@ -51,8 +51,8 @@ jobs:
           short_sha="${GITHUB_SHA:0:8}"
           NEW_BRANCH="mergeback/${VERSION}-to-${BASE_BRANCH}-${short_sha}"
           echo "newBranch=${NEW_BRANCH}" >> $GITHUB_OUTPUT
-          latest_release_branch=$(git branch -r | grep -E "origin/releases/v[0-9]+$" | sed 's/origin\///g' | sort -V | tail -1 | xargs)
-          echo "latest_release_branch=${NEW_BRANCH}" >> $GITHUB_OUTPUT
+          LATEST_RELEASE_BRANCH=$(git branch -r | grep -E "origin/releases/v[0-9]+$" | sed 's/origin\///g' | sort -V | tail -1 | xargs)
+          echo "latest_release_branch=${LATEST_RELEASE_BRANCH}" >> $GITHUB_OUTPUT
 
       - name: Dump branches
         env:
@@ -61,6 +61,8 @@ jobs:
           echo "BASE_BRANCH ${BASE_BRANCH}"
           echo "HEAD_BRANCH ${HEAD_BRANCH}"
           echo "NEW_BRANCH ${NEW_BRANCH}"
+          echo "LATEST_RELEASE_BRANCH ${LATEST_RELEASE_BRANCH}"
+          echo "GITHUB_REF ${GITHUB_REF}"
 
       - name: Create mergeback branch
         env:
