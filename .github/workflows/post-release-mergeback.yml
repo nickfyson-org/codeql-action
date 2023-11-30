@@ -17,6 +17,7 @@ on:
   push:
     branches:
       - releases/v2
+      # TODO need to change this workflow to run on any release branch change
 
 jobs:
   merge-back:
@@ -105,6 +106,7 @@ jobs:
           git push origin --atomic --force refs/tags/"${VERSION}" refs/tags/"${major_version_tag}"
 
       - name: Create mergeback branch
+        # TODO only crete mergeback PR when for the latest release branch
         if: steps.check.outputs.exists != 'true'
         env:
           VERSION: "${{ steps.getVersion.outputs.version }}"
