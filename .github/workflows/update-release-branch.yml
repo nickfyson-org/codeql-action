@@ -105,6 +105,7 @@ jobs:
     needs: [prepare]
     if: ${{ (github.event_name == 'push') && needs.prepare.outputs.backport_target_branches != '[]' && needs.prepare.outputs.backport_target_branches != '' }}
     strategy:
+      fail-fast: false
       matrix:
         target_branch: ${{ fromJson(needs.prepare.outputs.backport_target_branches) }}
     env:
