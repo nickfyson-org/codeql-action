@@ -5,7 +5,7 @@ import subprocess
 # Name of the remote
 ORIGIN = 'origin'
 
-OLDEST_SUPPORTED_MAJOR_VERSION = 3
+OLDEST_SUPPORTED_MAJOR_VERSION = 4
 
 # Runs git with the given args and returns the stdout.
 # Raises an error if git does not exit successfully (unless passed
