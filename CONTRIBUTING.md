@@ -99,7 +99,9 @@ We typically deprecate a version of CodeQL when the GitHub Enterprise Server (GH
     - Add a changelog note announcing the new minimum version of CodeQL that is now required.
     - Example PR: https://github.com/github/codeql-action/pull/1907
 
-## TODO add a section on deprecating an older codeql-action release
+## Deprecating a CodeQL-Action version (write access required)
+
+TODO: fill this section in!
 
 ## Resources
 
