@@ -316,6 +316,8 @@ def main():
 
       # Also revert the "Update checked-in dependencies" commit created by Actions.
       update_dependencies_commit = run_git('log', '--grep', '^Update checked-in dependencies', '--format=%H').split()[0]
+      # TODO: why is this failing for the v2 branch currently...?
+      # can we make it... optional? or something??
       print(f'  Reverting {update_dependencies_commit}')
       run_git('revert', update_dependencies_commit, '--no-edit')
 
