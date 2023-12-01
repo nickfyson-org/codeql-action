@@ -6,6 +6,10 @@ See the [releases page](https://github.com/github/codeql-action/releases) for th
 
 No user facing changes.
 
+## 3.22.11 - 01 Dec 2023
+
+No user facing changes.
+
 ## 2.22.10 - 01 Dec 2023
 
 No user facing changes.
