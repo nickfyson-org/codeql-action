@@ -30,18 +30,22 @@ def main():
   print("major_version: " + major_version)
   print("latest_tag: " + latest_tag)
 
+  # If this is a primary release, we backport to all supported branches,
+  # so we check whether the major_version taken from the package.json
+  # is greater than or equal to the latest tag pulled from the repo.
+  # For example...
+  #     'v1' >= 'v2' is False # we're operating from an older release branch and should not backport
+  #     'v2' >= 'v2' is True  # the normal case where we're updating the version
+  #     'v3' >= 'v2' is True  # this is the first release of a new major version
+  consider_backports = major_version >= latest_tag.split(".")[0]
+
   with open(os.environ["GITHUB_OUTPUT"], "a") as f:
 
     f.write(f"backport_source_branch=releases/{major_version}\n")
 
     backport_target_branches = []
 
-
-    # TODO we have a race condition here if this is the _first_ release of a new major version
-    # in which case the workflow that tags the release may not yet have run
-    # we can catch this by have || the major version is a new major version
-    if latest_tag.startswith(major_version):
-      # This is a primary release and should be backported to all supported branches
+    if consider_backports:
       for i in range(int(major_version.strip("v"))-1, 0, -1):
         branch_name = f"releases/v{i}"
         if i >= OLDEST_SUPPORTED_MAJOR_VERSION:
