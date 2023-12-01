@@ -312,14 +312,15 @@ def main():
       print(f'  Reverting {vOlder_update_commits[0]}')
       # Only revert the newest commit as older ones will already have been reverted in previous
       # releases.
-      run_git('revert', vOlder_update_commits[0], '--no-edit')
+      # run_git('revert', vOlder_update_commits[0], '--no-edit')
 
       # Also revert the "Update checked-in dependencies" commit created by Actions.
       update_dependencies_commit = run_git('log', '--grep', '^Update checked-in dependencies', '--format=%H').split()[0]
       # TODO: why is this failing for the v2 branch currently...?
-      # can we make it... optional? or something??
+      # remove the actual runnning of the revert for now, and look at logging to check
+      # existence of the commits
       print(f'  Reverting {update_dependencies_commit}')
-      run_git('revert', update_dependencies_commit, '--no-edit')
+      # run_git('revert', update_dependencies_commit, '--no-edit')
 
     else:
       print('  Nothing to revert.')
