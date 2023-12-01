@@ -2,11 +2,11 @@
 
 See the [releases page](https://github.com/github/codeql-action/releases) for the relevant changes to the CodeQL CLI and language packs.
 
-## 4.23.3 - 01 Dec 2023
+## 2.23.3 - 01 Dec 2023
 
 No user facing changes.
 
-## 4.23.1 - 01 Dec 2023
+## 2.23.1 - 01 Dec 2023
 
 No user facing changes.
 
