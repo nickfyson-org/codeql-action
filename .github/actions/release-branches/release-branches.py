@@ -35,15 +35,14 @@ def main():
     f.write(f"backport_source_branch=releases/{major_version}\n")
 
     backport_target_branches = []
-    major_version_number = int(major_version.strip("v"))
 
-    for i in range(major_version_number-1, 0, -1):
-      branch_name = f"releases/v{i}"
-      if i >= OLDEST_SUPPORTED_MAJOR_VERSION:
-        backport_target_branches.append(branch_name)
+    if latest_tag.startswith(major_version):
+      # This is a primary release and should be backported to all supported branches
+      for i in range(int(major_version.strip("v"))-1, 0, -1):
+        branch_name = f"releases/v{i}"
+        if i >= OLDEST_SUPPORTED_MAJOR_VERSION:
+          backport_target_branches.append(branch_name)
 
-    # TODO need to return empty array if the major version is not the latest
-    # in order to ensure that the backport job is not triggered
     f.write("backport_target_branches="+json.dumps(backport_target_branches)+"\n")
 
 if __name__ == "__main__":
