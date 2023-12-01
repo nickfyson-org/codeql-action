@@ -36,6 +36,10 @@ def main():
 
     backport_target_branches = []
 
+
+    # TODO we have a race condition here if this is the _first_ release of a new major version
+    # in which case the workflow that tags the release may not yet have run
+    # we can catch this by have || the major version is a new major version
     if latest_tag.startswith(major_version):
       # This is a primary release and should be backported to all supported branches
       for i in range(int(major_version.strip("v"))-1, 0, -1):
