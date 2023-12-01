@@ -41,6 +41,9 @@ def main():
       branch_name = f"releases/v{i}"
       if i >= OLDEST_SUPPORTED_MAJOR_VERSION:
         backport_target_branches.append(branch_name)
+
+    # TODO need to return empty array if the major version is not the latest
+    # in order to ensure that the backport job is not triggered
     f.write("backport_target_branches="+json.dumps(backport_target_branches)+"\n")
 
 if __name__ == "__main__":
