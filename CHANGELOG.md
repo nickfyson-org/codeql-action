@@ -2,6 +2,11 @@
 
 See the [releases page](https://github.com/github/codeql-action/releases) for the relevant changes to the CodeQL CLI and language packs.
 
+## 3.22.11 - 04 Dec 2023
+
+- Once upon a time in a galaxy far far away...
+- Foo bar blort something something carrot potato
+
 ## 3.22.10 - 04 Dec 2023
 
 No user facing changes.
