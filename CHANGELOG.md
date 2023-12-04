@@ -4,7 +4,9 @@ See the [releases page](https://github.com/github/codeql-action/releases) for th
 
 ## [UNRELEASED]
 
-No user facing changes.
+- Once upon a time in a galaxy far far away...
+- [v4+ only] The CodeQL Action now runs on Node.js v20. [#1000](https://github.com/github/codeql-action/pull/1000)
+- Foo bar blort something something carrot potato
 
 ## 3.22.10 - 04 Dec 2023
 
