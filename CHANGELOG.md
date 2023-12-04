@@ -4,7 +4,10 @@ See the [releases page](https://github.com/github/codeql-action/releases) for th
 
 ## [UNRELEASED]
 
-No user facing changes.
+- [v1+ only] Foo
+- [v2+ only] Bar
+- [v3+ only] Blort
+- [v4+ only] Qux
 
 ## 4.22.11 - 04 Dec 2023
 
