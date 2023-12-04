@@ -2,7 +2,7 @@
 
 See the [releases page](https://github.com/github/codeql-action/releases) for the relevant changes to the CodeQL CLI and language packs.
 
-## [UNRELEASED]
+## 4.22.11 - 04 Dec 2023
 
 - Once upon a time in a galaxy far far away...
 - [v4+ only] The CodeQL Action now runs on Node.js v20. [#1000](https://github.com/github/codeql-action/pull/1000)
