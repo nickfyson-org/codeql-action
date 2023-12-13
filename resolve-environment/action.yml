@@ -19,5 +19,5 @@ outputs:
   environment:
     description: The inferred build environment configuration.
 runs:
-  using: 'node24'
+  using: 'node25'
   main: '../lib/resolve-environment-action.js'

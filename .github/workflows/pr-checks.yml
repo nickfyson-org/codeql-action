@@ -144,7 +144,7 @@ jobs:
 
       - id: checkout-base
         name: check out base ref for backport check
-        if: ${{ startsWith(github.head_ref, 'nickfyson-') }}
+        if: ${{ startsWith(github.head_ref, 'backport-') }}
         uses: actions/checkout@v4
         with:
           ref: ${{ env.BASE_REF }}
