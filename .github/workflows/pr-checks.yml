@@ -121,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
-      BASE_REF: ${{ github.event.pull_request.base }}
+      BASE_REF: ${{ github.base_ref }}
 
     steps:
       - uses: actions/checkout@v4
@@ -136,10 +136,15 @@ jobs:
             exit 1
           fi
           echo "node_version=${NODE_VERSION}" >> $GITHUB_OUTPUT
+          echo ""
+          echo "github.head_ref: ${{ github.head_ref }}"
+          echo "github.ref: ${{ github.ref }}"
+          echo "github.ref_name: ${{ github.ref_name }}"
+          echo "github.base_ref: ${{ env.BASE_REF }}"
 
       - id: checkout-base
         name: check out base ref for backport check
-        if: ${{ startsWith(github.ref_name, 'backport-v') }}
+        if: ${{ startsWith(github.head_ref, 'nickfyson-') }}
         uses: actions/checkout@v4
         with:
           ref: ${{ env.BASE_REF }}
