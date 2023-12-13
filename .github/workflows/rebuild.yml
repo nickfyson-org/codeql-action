@@ -21,7 +21,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          gh pr edit --repo github/codeql-action "$PR_NUMBER" \
+          gh pr edit --repo nickfyson-org/codeql-action "$PR_NUMBER" \
             --remove-label "Rebuild"
 
       - name: Compile TypeScript
@@ -55,6 +55,6 @@ jobs:
             git push origin "HEAD:$BRANCH"
             echo "Pushed a commit to rebuild the Action." \
               "Please mark the PR as ready for review to trigger PR checks." |
-              gh pr comment --body-file - --repo github/codeql-action "$PR_NUMBER"
-            gh pr ready --undo --repo github/codeql-action "$PR_NUMBER"
+              gh pr comment --body-file - --repo nickfyson-org/codeql-action "$PR_NUMBER"
+            gh pr ready --undo --repo nickfyson-org/codeql-action "$PR_NUMBER"
           fi
