@@ -15,7 +15,7 @@ jobs:
 
   prepare:
     runs-on: ubuntu-latest
-    if: github.repository == 'github/codeql-action'
+    if: github.repository == 'nickfyson-org/codeql-action'
     outputs:
       version: ${{ steps.versions.outputs.version }}
       major_version: ${{ steps.versions.outputs.major_version }}
